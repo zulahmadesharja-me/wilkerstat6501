@@ -1,0 +1,2131 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WebGIS Wilkerstat Kabupaten Malinau</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+<style>
+:root{
+    --navy:#17324d;
+    --blue:#1769aa;
+    --line:#d8e0e8;
+    --bg:#f4f7fa;
+}
+
+*{box-sizing:border-box}
+
+body{
+    margin:0;
+    font-family:Arial,sans-serif;
+    color:#203040;
+    background:var(--bg);
+}
+
+header{
+    background:var(--navy);
+    color:#fff;
+    padding:13px 18px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+header .mark{font-size:24px}
+header h1{font-size:17px;margin:0;font-weight:700}
+header p{margin:4px 0 0;font-size:12px;color:#d7e5f2}
+
+.menu-mobile{
+    display:none;
+    margin-left:auto;
+    border:0;
+    background:transparent;
+    color:white;
+    font-size:27px;
+    cursor:pointer;
+    padding:3px 8px;
+}
+
+.app{
+    display:grid;
+    grid-template-columns:320px 1fr;
+    height:calc(100vh - 58px);
+}
+
+aside{
+    background:#fff;
+    border-right:1px solid var(--line);
+    padding:12px;
+    overflow-y:auto;
+}
+
+main{position:relative;min-width:0}
+
+#map{
+    height:100%;
+    width:100%;
+    background:#e7edf2;
+}
+
+/* PANEL */
+
+.panel{
+    border:1px solid var(--line);
+    border-radius:8px;
+    margin-bottom:10px;
+    background:#fff;
+    overflow:visible;
+}
+
+.panel-title{
+    padding:13px 12px;
+    font-size:13px;
+    font-weight:700;
+    color:#29435c;
+    background:#f7f9fb;
+    display:flex;
+    align-items:center;
+    user-select:none;
+    border-radius:8px 8px 0 0;
+}
+
+.panel-content{
+    display:block;
+    padding:10px 12px 13px;
+    border-top:1px solid var(--line);
+}
+
+.section{margin-bottom:12px}
+.section:last-child{margin-bottom:0}
+
+.section h2{
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+    color:#526477;
+    margin:0 0 10px;
+}
+
+label{
+    display:block;
+    font-size:12px;
+    font-weight:600;
+    margin:9px 0 5px;
+}
+
+select,input[type=text]{
+    width:100%;
+    padding:10px;
+    border:1px solid #cbd5df;
+    border-radius:6px;
+    background:#fff;
+    font-size:13px;
+    color:#25384a;
+}
+
+.version{display:flex;gap:7px}
+
+.version label{
+    flex:1;
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:9px;
+    margin:0;
+    font-weight:500;
+    display:flex;
+    align-items:center;
+    gap:6px;
+}
+
+.version input,.checkrow input{accent-color:var(--blue)}
+
+.checkrow{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:13px;
+    margin:10px 0;
+}
+
+.checkrow label{
+    margin:0;
+    font-size:13px;
+    font-weight:400;
+    cursor:pointer;
+}
+
+.hint{
+    font-size:11px;
+    line-height:1.5;
+    color:#647789;
+}
+
+.status{
+    border-radius:6px;
+    padding:9px;
+    background:#f1f6fb;
+    font-size:12px;
+    line-height:1.5;
+    white-space:pre-line;
+}
+
+.status.error{background:#fff2f0;color:#a33326}
+
+.btn{
+    border:0;
+    border-radius:6px;
+    padding:10px 12px;
+    background:var(--blue);
+    color:#fff;
+    cursor:pointer;
+    font-size:12px;
+}
+
+.btn.secondary{background:#e9eff5;color:#29435c}
+.btnrow{display:flex;gap:7px;margin-top:10px}
+
+.legend{font-size:12px;line-height:2}
+
+.swatch{
+    display:inline-block;
+    width:45px;
+    height:0;
+    margin-right:10px;
+    vertical-align:middle;
+}
+
+.swatch.kecamatan{
+    border-top:3px solid #f71f1f;
+    position:relative;
+}
+
+.swatch.kecamatan::after{
+    content:"";
+    position:absolute;
+    left:0;
+    top:-3px;
+    width:45px;
+    border-top:3px dashed #000;
+    z-index:2;
+}
+
+.swatch.desa{border-top:3px solid #f71f1f}
+.swatch.subsls{border-top:3px dotted #f71f1f}
+.swatch.pembanding{border-top:3px solid #f4a261}
+
+footer{
+    font-size:10px;
+    color:#81909e;
+    margin-top:12px;
+    padding:5px;
+}
+
+/* LABEL SUB-SLS */
+
+
+.subsls-label{
+    background:rgba(255,255,255,.92);
+    border:1px solid #777;
+    border-radius:3px;
+    color:#202020;
+    font-size:10px;
+    font-weight:700;
+    padding:4px 7px;
+    box-shadow:0 1px 3px rgba(0,0,0,.25);
+    white-space:nowrap;
+    pointer-events:none;
+    line-height:1.4;
+}
+
+
+.leaflet-tooltip.subsls-label::before{
+    display:none;
+}
+
+/* TOMBOL POSISI SAYA */
+
+.location-control{
+    position:absolute;
+    right:18px;
+    bottom:25px;
+    z-index:1000;
+    width:46px;
+    height:46px;
+    border:1px solid #ddd;
+    border-radius:50%;
+    background:white;
+    color:#1769aa;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    box-shadow:0 2px 7px rgba(0,0,0,.3);
+}
+
+.location-control:hover{background:#f1f6fb}
+.location-control:disabled{opacity:.6;cursor:wait}
+
+/* PENCARIAN */
+
+.search-wrap{
+    position:relative;
+    width:100%;
+}
+
+.search-box{position:relative}
+
+.search-box input{
+    padding:12px 38px 12px 36px;
+    border-radius:8px;
+    font-size:13px;
+    box-shadow:0 1px 3px rgba(0,0,0,.08);
+}
+
+.search-icon{
+    position:absolute;
+    left:11px;
+    top:50%;
+    transform:translateY(-50%);
+    color:#647789;
+    pointer-events:none;
+    font-size:16px;
+}
+
+.search-clear{
+    position:absolute;
+    right:8px;
+    top:50%;
+    transform:translateY(-50%);
+    border:0;
+    background:transparent;
+    color:#647789;
+    font-size:19px;
+    cursor:pointer;
+    display:none;
+    padding:3px 6px;
+}
+
+.search-results{
+    position:absolute;
+    top:calc(100% + 5px);
+    left:0;
+    right:0;
+    z-index:2000;
+    background:white;
+    border:1px solid #d8e0e8;
+    border-radius:8px;
+    box-shadow:0 5px 18px rgba(0,0,0,.18);
+    max-height:360px;
+    overflow-y:auto;
+    display:none;
+}
+
+.search-results.show{display:block}
+
+.search-result{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    padding:11px 12px;
+    border-bottom:1px solid #edf0f3;
+    cursor:pointer;
+    transition:background .15s;
+}
+
+.search-result:last-child{border-bottom:0}
+.search-result:hover{background:#f1f6fb}
+
+.result-icon{
+    width:30px;
+    height:30px;
+    border-radius:50%;
+    background:#edf3f8;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+    font-size:15px;
+}
+
+.result-info{min-width:0;flex:1}
+
+.result-name{
+    font-size:13px;
+    font-weight:700;
+    color:#25384a;
+    line-height:1.4;
+}
+
+.result-detail{
+    font-size:11px;
+    color:#718092;
+    line-height:1.5;
+    margin-top:2px;
+    overflow-wrap:anywhere;
+}
+
+.result-category{
+    display:inline-block;
+    font-size:10px;
+    color:#1769aa;
+    background:#edf5fc;
+    padding:2px 6px;
+    border-radius:4px;
+    margin-top:4px;
+}
+
+.result-heading{
+    padding:8px 12px;
+    background:#f7f9fb;
+    color:#526477;
+    font-size:10px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+    border-bottom:1px solid #e5eaf0;
+}
+
+.search-message{
+    padding:13px;
+    font-size:12px;
+    color:#718092;
+    text-align:center;
+}
+
+/* MOBILE */
+
+@media(max-width:760px){
+
+    header{padding:11px 13px}
+    header h1{font-size:15px}
+    header p{font-size:11px}
+    .menu-mobile{display:block}
+
+    .app{
+        display:block;
+        position:relative;
+        height:calc(100vh - 54px);
+        height:calc(100dvh - 54px);
+        min-height:0;
+    }
+
+    aside{
+        position:absolute;
+        top:0;
+        left:0;
+        z-index:1100;
+        width:min(88%,340px);
+        height:100%;
+        max-height:100%;
+        background:#fff;
+        border-right:1px solid var(--line);
+        padding:9px;
+        overflow-y:auto;
+        box-shadow:3px 0 12px rgba(0,0,0,.2);
+        transform:translateX(-105%);
+        transition:transform .25s ease;
+    }
+
+    .app.sidebar-open aside{transform:translateX(0)}
+    .panel{margin-bottom:8px}
+    .panel-title{padding:13px;font-size:13px}
+    .panel-content{display:block;padding:10px 12px 12px}
+
+    select,input[type=text]{
+        padding:11px;
+        font-size:14px;
+    }
+
+    .checkrow{min-height:28px}
+    .checkrow input{width:17px;height:17px}
+
+    main{width:100%;height:100%}
+    #map{width:100%;height:100%;min-height:0}
+
+    .leaflet-control-zoom a{
+        width:36px!important;
+        height:36px!important;
+        line-height:36px!important;
+    }
+
+    footer{margin-bottom:5px}
+    .search-results{max-height:45vh}
+}
+
+@media(max-width:380px){
+    header h1{font-size:14px}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="mark">🗺️</div>
+    <div>
+        <h1>WEBGIS WILKERSTAT 6501</h1>
+        <p>Visualisasi dan penelusuran batas wilayah statistik</p>
+    </div>
+
+    <button id="menuMobile" class="menu-mobile"
+        aria-label="Buka menu"
+        aria-expanded="false">
+        ☰
+    </button>
+</header>
+
+<div class="app">
+
+<aside>
+
+    <!-- FILTER WILAYAH -->
+
+    <section class="panel">
+        <div class="panel-title">Filter Wilayah</div>
+
+        <div class="panel-content">
+
+            <label for="kecamatan">Kecamatan</label>
+            <select id="kecamatan">
+                <option value="">Semua Kecamatan</option>
+            </select>
+
+            <label for="desa">Desa</label>
+            <select id="desa">
+                <option value="">Semua Desa</option>
+            </select>
+
+            <label for="subsls">Sub-SLS</label>
+            <select id="subsls">
+                <option value="">Semua Sub-SLS</option>
+            </select>
+
+            <div class="btnrow">
+                <button class="btn" id="reset">Reset filter</button>
+            </div>
+
+            <div class="section" style="margin-top:15px">
+                <h2>Pencarian Wilkerstat</h2>
+
+                <div class="search-wrap">
+
+                    <div class="search-box">
+                        <span class="search-icon">⌕</span>
+
+                        <input
+                            id="search"
+                            type="text"
+                            placeholder="Cari RT, Sub-SLS, desa, kode..."
+                            autocomplete="off"
+                        >
+
+                        <button
+                            type="button"
+                            id="searchClear"
+                            class="search-clear"
+                            title="Hapus pencarian"
+                        >×</button>
+                    </div>
+
+                    <div id="searchResults" class="search-results"></div>
+
+                </div>
+
+                <p class="hint">
+                    Ketik nama atau nomor RT, misalnya 003, RT 003,
+                    kode Sub-SLS, ID Sub-SLS, desa, atau kecamatan.
+                </p>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- LABEL PETA -->
+
+    <section class="panel">
+        <div class="panel-title">Label Peta</div>
+
+        <div class="panel-content">
+
+            <div class="checkrow">
+                <input type="checkbox" id="showLabels">
+                <label for="showLabels">Tampilkan Nama Sub-SLS</label>
+            </div>
+
+            <div class="checkrow">
+                <input type="checkbox" id="showDesaLabels">
+                <label for="showDesaLabels">Tampilkan Nama Desa</label>
+            </div>
+
+            <div class="checkrow">
+                <input type="checkbox" id="showKecamatanLabels">
+                <label for="showKecamatanLabels">Tampilkan Nama Kecamatan</label>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- OPSI LAYAR BATAS -->
+
+    <section class="panel">
+        <div class="panel-title">Opsi Layar Batas</div>
+
+        <div class="panel-content">
+
+            <div class="section">
+                <h2>Versi batas wilayah</h2>
+
+                <div class="version">
+                    <label>
+                        <input type="radio" name="version" value="2026-1" checked>
+                        2026-1
+                    </label>
+
+                    <label>
+                        <input type="radio" name="version" value="2025-2">
+                        2025-2
+                    </label>
+                </div>
+
+                <div class="checkrow">
+                    <input type="checkbox" id="compare">
+                    <label for="compare">Mode perbandingan kedua versi</label>
+                </div>
+
+                <p class="hint">
+                    Mode perbandingan menampilkan kedua versi bersamaan dengan warna berbeda.
+                </p>
+            </div>
+
+            <div class="section">
+                <h2>Layer batas wilayah</h2>
+
+                <div class="checkrow">
+                    <input type="checkbox" id="showKecamatan">
+                    <label for="showKecamatan">Batas Kecamatan</label>
+                </div>
+
+                <div class="checkrow">
+                    <input type="checkbox" id="showDesa">
+                    <label for="showDesa">Batas Desa</label>
+                </div>
+
+                <div class="checkrow">
+                    <input type="checkbox" id="showSubsls" checked>
+                    <label for="showSubsls">Batas Sub-SLS</label>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Status Data</h2>
+                <div class="status" id="status">
+                    Menyiapkan pemuatan data KML...
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- LEGENDA -->
+
+    <section class="panel">
+        <div class="panel-title">Legenda</div>
+
+        <div class="panel-content">
+
+            <div class="legend">
+                <div><span class="swatch kecamatan"></span>Batas Kecamatan</div>
+                <div><span class="swatch desa"></span>Batas Desa/Kelurahan</div>
+                <div><span class="swatch subsls"></span>Batas SLS/Sub-SLS</div>
+                <div><span class="swatch pembanding"></span>Versi pembanding 2025-2</div>
+            </div>
+
+        </div>
+    </section>
+
+    <footer>
+        WebGIS Wilkerstat 6501. <br>
+        Jika Ada Kendala yang ditemui hubungi admin.
+    </footer>
+
+</aside>
+
+<main>
+    <div id="map"></div>
+
+    <button id="lokasiSaya" class="location-control" title="Posisi Saya">
+        <svg viewBox="0 0 24 24" width="23" height="23">
+            <circle cx="12" cy="12" r="3"
+                fill="none" stroke="currentColor" stroke-width="2"/>
+            <path d="M12 2v4 M12 18v4 M2 12h4 M18 12h4"
+                fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round"/>
+        </svg>
+    </button>
+</main>
+
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/@tmcw/togeojson@5.8.1/dist/togeojson.umd.js"></script>
+
+<script>
+'use strict';
+
+/* PETA */
+
+const map=L.map('map').setView([3.5,116.5],8);
+
+const baseLayers={
+
+    "Google Hybrid":L.tileLayer(
+        'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+        {
+            attribution:'&copy; Google',
+            maxZoom:20
+        }
+    ),
+
+    "Citra Satelit (Esri)":L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        {
+            attribution:'Tiles &copy; Esri',
+            maxZoom:19
+        }
+    ),
+
+    "OpenStreetMap":L.tileLayer(
+        'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        {
+            attribution:'&copy; OpenStreetMap contributors',
+            maxZoom:19
+        }
+    ),
+
+    "Peta Jalan (Esri)":L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+        {
+            attribution:'Tiles &copy; Esri',
+            maxZoom:19
+        }
+    )
+
+};
+
+baseLayers["Google Hybrid"].addTo(map);
+
+L.control.layers(
+    baseLayers,
+    {},
+    {position:'topright',collapsed:true}
+).addTo(map);
+
+L.control.scale({
+    metric:true,
+    imperial:false
+}).addTo(map);
+
+/* MENU SIDEBAR MOBILE */
+
+const menuMobile=document.getElementById('menuMobile');
+const app=document.querySelector('.app');
+
+menuMobile.addEventListener('click',function(){
+
+    const terbuka=app.classList.toggle('sidebar-open');
+
+    menuMobile.setAttribute('aria-expanded',terbuka);
+
+    menuMobile.setAttribute(
+        'aria-label',
+        terbuka?'Tutup menu':'Buka menu'
+    );
+
+    this.textContent=terbuka?'×':'☰';
+
+    setTimeout(()=>{
+        map.invalidateSize();
+    },300);
+
+});
+
+/* KONFIGURASI DATA */
+
+const types=['kecamatan','desa','subsls'];
+
+const styles={
+    kecamatan:{
+        color:'#f71f1f',
+        weight:3,
+        fillOpacity:0
+    },
+
+    desa:{
+        color:'#f71f1f',
+        weight:3,
+        fillOpacity:0
+    },
+
+    subsls:{
+        color:'#f71f1f',
+        weight:2.5,
+        dashArray:'2, 5',
+        fillOpacity:0
+    }
+};
+
+const versions=['2025-2','2026-1'];
+
+const data={
+    '2025-2':{},
+    '2026-1':{}
+};
+
+const layerGroups={
+    '2025-2':{},
+    '2026-1':{}
+};
+
+let activeVersion='2026-1';
+let visibleBounds=[];
+
+let searchResultLayer=L.layerGroup().addTo(map);
+
+/* FUNGSI PEMBANTU */
+
+function norm(s){
+    return String(s ?? '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g,'')
+        .replace(/[^a-z0-9]/g,'');
+}
+
+function prop(f,key){
+
+    const p=f?.properties||{};
+    const wanted=norm(key);
+
+    const found=Object.entries(p).find(
+        ([k,v])=>
+            norm(k)===wanted &&
+            v!==null &&
+            String(v).trim()!==''
+    );
+
+    return found?String(found[1]).trim():'';
+}
+
+function first(f,keys){
+
+    for(const k of keys){
+        const v=prop(f,k);
+        if(v!=='')return v;
+    }
+
+    return '';
+}
+
+function fields(f){
+
+    return {
+        kdkec:first(f,['kdkec']),
+        nmkec:first(f,['nmkec']),
+        kddesa:first(f,['kddesa']),
+        nmdesa:first(f,['nmdesa']),
+        nama:first(f,['nama']),
+        nmsls:first(f,['nmsls']),
+        idsubsls:first(f,['idsubsls']),
+        kdsubsls:first(f,['kdsubsls'])
+    };
+}
+
+function labelFor(f,type){
+
+    const a=fields(f);
+
+    if(type==='kecamatan'){
+        return `[${a.kdkec}] ${a.nmkec}`.trim();
+    }
+
+    if(type==='desa'){
+        return `[${a.kddesa}] ${a.nmdesa}`.trim();
+    }
+
+    return a.nama||'';
+}
+
+function featureKey(f,type){
+
+    const a=fields(f);
+
+    if(type==='kecamatan')return a.kdkec||a.nmkec;
+    if(type==='desa')return a.kddesa||a.nmdesa;
+
+    return a.nama||a.idsubsls||a.kdsubsls;
+}
+
+function addOptions(el,items,placeholder){
+
+    const old=el.value;
+
+    el.innerHTML='';
+
+    const firstOpt=document.createElement('option');
+    firstOpt.value='';
+    firstOpt.textContent=placeholder;
+    el.appendChild(firstOpt);
+
+    const seen=new Set();
+
+    items.forEach(item=>{
+
+        if(!item.key||seen.has(item.key))return;
+
+        seen.add(item.key);
+
+        const o=document.createElement('option');
+        o.value=item.key;
+        o.textContent=item.label;
+
+        el.appendChild(o);
+    });
+
+    if([...el.options].some(o=>o.value===old)){
+        el.value=old;
+    }
+}
+
+function currentFeatures(v,t){
+    return data[v][t]?.features||[];
+}
+
+/* FILTER */
+
+function updateFilters(){
+
+    const kecEl=document.getElementById('kecamatan');
+    const desaEl=document.getElementById('desa');
+    const subEl=document.getElementById('subsls');
+
+    const selectedKec=kecEl.value;
+    const selectedDesa=desaEl.value;
+
+    const kecFeatures=currentFeatures(activeVersion,'kecamatan');
+    const desaFeatures=currentFeatures(activeVersion,'desa');
+    const subFeatures=currentFeatures(activeVersion,'subsls');
+
+    const kecItems=kecFeatures.map(f=>({
+        key:prop(f,'kdkec'),
+        label:labelFor(f,'kecamatan')
+    }))
+    .filter(x=>x.key&&x.label)
+    .sort((a,b)=>Number(b.key)-Number(a.key));
+
+    addOptions(kecEl,kecItems,'Semua Kecamatan');
+
+    const desaItems=desaFeatures
+        .filter(f=>!selectedKec||prop(f,'kdkec')===selectedKec)
+        .map(f=>({
+            key:prop(f,'kddesa'),
+            label:labelFor(f,'desa')
+        }))
+        .filter(x=>x.key&&x.label)
+        .sort((a,b)=>a.label.localeCompare(b.label,'id',{numeric:true}));
+
+    addOptions(desaEl,desaItems,'Semua Desa');
+
+    const subItems=subFeatures
+        .filter(f=>
+            (!selectedKec||prop(f,'kdkec')===selectedKec) &&
+            (!selectedDesa||prop(f,'kddesa')===selectedDesa)
+        )
+        .map(f=>({
+            key:featureKey(f,'subsls'),
+            label:labelFor(f,'subsls')
+        }))
+        .filter(x=>x.key&&x.label)
+        .sort((a,b)=>a.label.localeCompare(b.label,'id',{numeric:true}));
+
+    addOptions(subEl,subItems,'Semua Sub-SLS');
+}
+
+/* PENYARINGAN PETA */
+
+function matches(f,type){
+
+    const a=fields(f);
+
+    const kec=document.getElementById('kecamatan').value;
+    const desa=document.getElementById('desa').value;
+    const sub=document.getElementById('subsls').value;
+
+    if(kec){
+
+        if(type==='kecamatan'&&featureKey(f,type)!==kec){
+            return false;
+        }
+
+        if(a.kdkec&&a.kdkec!==kec){
+            return false;
+        }
+    }
+
+    if(desa){
+
+        if(type==='desa'&&featureKey(f,type)!==desa){
+            return false;
+        }
+
+        if(a.kddesa&&a.kddesa!==desa){
+            return false;
+        }
+    }
+
+    if(sub&&type==='subsls'&&featureKey(f,type)!==sub){
+        return false;
+    }
+
+    return true;
+}
+
+/* POPUP */
+
+function popupHtml(feature,type){
+
+    if(type==='kecamatan'){
+
+        const nama=prop(feature,'nmkec')||'-';
+        const kode=prop(feature,'kdkec')||'-';
+
+        return `
+            <b>${escapeHtml(nama)}</b><br>
+            Kode Kecamatan: ${escapeHtml(kode)}
+        `;
+    }
+
+    if(type==='desa'){
+
+        const nama=prop(feature,'nmdesa')||'-';
+        const kode=prop(feature,'kddesa')||'-';
+        const kecamatan=prop(feature,'nmkec')||'-';
+
+        return `
+            <b>${escapeHtml(nama)}</b><br>
+            Kode Desa: ${escapeHtml(kode)}<br>
+            Kecamatan: ${escapeHtml(kecamatan)}
+        `;
+    }
+
+    const nama=prop(feature,'nama')||'-';
+    const id=prop(feature,'idsubsls')||'-';
+    const desa=prop(feature,'nmdesa')||'-';
+    const kec=prop(feature,'nmkec')||'-';
+
+    return `
+        <b>${escapeHtml(nama)}</b><br>
+        ID Sub-SLS: ${escapeHtml(id)}<br>
+        Desa: ${escapeHtml(desa)}<br>
+        Kecamatan: ${escapeHtml(kec)}
+    `;
+}
+
+function escapeHtml(value){
+
+    return String(value).replace(
+        /[&<>"']/g,
+        c=>({
+            '&':'&amp;',
+            '<':'&lt;',
+            '>':'&gt;',
+            '"':'&quot;',
+            "'":'&#39;'
+        }[c])
+    );
+}
+
+/* FUNGSI CEK TITIK DALAM POLIGON */
+
+function titikDalamRing(point,ring){
+
+    const x=point.lng;
+    const y=point.lat;
+
+    let inside=false;
+
+    for(let i=0,j=ring.length-1;i<ring.length;j=i++){
+
+        const xi=ring[i][0],yi=ring[i][1];
+        const xj=ring[j][0],yj=ring[j][1];
+
+        const intersect=
+            ((yi>y)!==(yj>y)) &&
+            (x<(xj-xi)*(y-yi)/(yj-yi)+xi);
+
+        if(intersect)inside=!inside;
+    }
+
+    return inside;
+}
+
+function titikDalamPolygon(point,coordinates){
+
+    if(!coordinates||!coordinates.length)return false;
+
+    if(!titikDalamRing(point,coordinates[0]))return false;
+
+    for(let i=1;i<coordinates.length;i++){
+
+        if(titikDalamRing(point,coordinates[i])){
+            return false;
+        }
+    }
+
+    return true;
+}
+
+function posisiDalamSubSLS(point,geometry){
+
+    if(!geometry)return false;
+
+    if(geometry.type==='Polygon'){
+        return titikDalamPolygon(point,geometry.coordinates);
+    }
+
+    if(geometry.type==='MultiPolygon'){
+
+        return geometry.coordinates.some(polygon=>
+            titikDalamPolygon(point,polygon)
+        );
+    }
+
+    return false;
+}
+
+/* MENCARI TITIK LABEL DI BAGIAN POLIGON YANG TERLIHAT */
+
+function titikLabelTerlihat(feature){
+    const layer = L.geoJSON(feature);
+    const bounds = layer.getBounds();
+
+    if(!bounds.isValid()) return null;
+
+    const center = bounds.getCenter();
+    const geometry = feature.geometry;
+
+    if(posisiDalamSubSLS(center, geometry)){
+        return center;
+    }
+
+    // Jika titik tengah bounding box berada di luar poligon,
+    // gunakan titik pada bagian poligon yang paling mendekati tengah.
+    const candidates = [];
+
+    const south = bounds.getSouth();
+    const north = bounds.getNorth();
+    const west = bounds.getWest();
+    const east = bounds.getEast();
+
+    for(let i=1;i<=9;i++){
+        for(let j=1;j<=9;j++){
+            const point = L.latLng(
+                south+(north-south)*i/10,
+                west+(east-west)*j/10
+            );
+
+            if(posisiDalamSubSLS(point, geometry)){
+                candidates.push(point);
+            }
+        }
+    }
+
+    if(!candidates.length) return null;
+
+    candidates.sort((a,b)=>
+        map.distance(a,center)-map.distance(b,center)
+    );
+
+    return candidates[0];
+}
+
+/* LABEL SUB-SLS */
+
+function buatLabelSubSLS(feature,layer){
+
+    if(!document.getElementById('showLabels').checked)return;
+
+    const p=feature.properties||{};
+
+    const nmsls=p.nmsls||'';
+    const kdsubsls=p.kdsubsls||'';
+
+    const teksLabel=`${nmsls}-${kdsubsls}`;
+
+    if(!nmsls&&!kdsubsls)return;
+
+    const posisi=titikLabelTerlihat(feature);
+
+    if(!posisi)return;
+
+    layer.bindTooltip(escapeHtml(teksLabel),{
+        permanent:true,
+        direction:'center',
+        className:'subsls-label',
+        interactive:false
+    });
+
+    layer.openTooltip(posisi);
+}
+
+/* LABEL DESA DAN KECAMATAN */
+
+function buatLabelWilayah(feature,layer,type){
+
+    const p=feature.properties||{};
+
+    let teks='';
+
+    if(type==='desa')teks=p.nmdesa||'';
+    if(type==='kecamatan')teks=p.nmkec||'';
+
+    if(teks){
+
+        layer.bindTooltip(escapeHtml(teks),{
+            permanent:true,
+            direction:'center',
+            className:'subsls-label',
+            interactive:false
+        });
+    }
+}
+
+/* MEMPERBARUI LABEL SAJA TANPA MENGGAMBAR ULANG BATAS */
+
+function perbaruiLabelSubSLS(){
+
+    const aktif=document.getElementById('showLabels').checked;
+
+    versions.forEach(version=>{
+
+        const group=layerGroups[version]?.subsls;
+
+        if(!group)return;
+
+        group.eachLayer(geoLayer=>{
+
+            if(!geoLayer.eachLayer)return;
+
+            geoLayer.eachLayer(featureLayer=>{
+
+                if(!featureLayer.feature)return;
+
+                featureLayer.unbindTooltip();
+
+                if(!aktif)return;
+
+                const feature=featureLayer.feature;
+
+                const p=feature.properties||{};
+
+                const nmsls=p.nmsls||'';
+                const kdsubsls=p.kdsubsls||'';
+
+                if(!nmsls&&!kdsubsls)return;
+
+                const posisi=titikLabelTerlihat(feature);
+
+                if(!posisi)return;
+
+                featureLayer.bindTooltip(
+                    escapeHtml(`${nmsls}-${kdsubsls}`),
+                    {
+                        permanent:true,
+                        direction:'center',
+                        className:'subsls-label',
+                        interactive:false
+                    }
+                );
+
+                featureLayer.openTooltip(posisi);
+            });
+
+        });
+
+    });
+}
+
+/* GAMBAR ULANG PETA */
+
+function redraw(){
+
+    Object.values(layerGroups).forEach(v=>
+        Object.values(v).forEach(g=>g.clearLayers())
+    );
+
+    visibleBounds=[];
+
+    const compare=document.getElementById('compare').checked;
+    const shown=compare?versions:[activeVersion];
+
+    shown.forEach(version=>{
+
+        types.forEach(type=>{
+
+            const checkbox=document.getElementById(
+                'show'+type[0].toUpperCase()+type.slice(1)
+            );
+
+            if(!checkbox.checked||!data[version][type])return;
+
+            const base=styles[type];
+
+            const isOld=compare&&version==='2025-2';
+
+            const color=isOld?'#f4a261':base.color;
+
+            if(type==='kecamatan'){
+
+                const garisMerah=L.geoJSON(data[version][type],{
+
+                    filter:f=>matches(f,type),
+
+                    style:()=>({
+                        color:color,
+                        weight:3,
+                        fillOpacity:0
+                    }),
+
+                    onEachFeature:(f,l)=>{
+
+                        l.bindPopup(popupHtml(f,type));
+
+                        if(document.getElementById('showKecamatanLabels').checked){
+                            buatLabelWilayah(f,l,'kecamatan');
+                        }
+                    }
+                });
+
+                garisMerah.addTo(layerGroups[version][type]);
+
+                const garisHitam=L.geoJSON(data[version][type],{
+
+                    interactive:false,
+
+                    filter:f=>matches(f,type),
+
+                    style:()=>({
+                        color:'#000000',
+                        weight:2,
+                        dashArray:'10, 10',
+                        fillOpacity:0
+                    })
+                });
+
+                garisHitam.addTo(layerGroups[version][type]);
+
+            }else{
+
+                const layer=L.geoJSON(data[version][type],{
+
+                    filter:f=>matches(f,type),
+
+                    style:()=>({
+                        ...base,
+                        color,
+                        fillColor:color
+                    }),
+
+                    onEachFeature:(f,l)=>{
+
+                        l.bindPopup(popupHtml(f,type));
+
+                        if(type==='subsls'){
+                            buatLabelSubSLS(f,l);
+                        }
+
+                        if(type==='desa'&&
+                           document.getElementById('showDesaLabels').checked){
+
+                            buatLabelWilayah(f,l,'desa');
+                        }
+                    }
+                });
+
+                layer.addTo(layerGroups[version][type]);
+            }
+
+            if(layerGroups[version][type].getLayers().length){
+
+                const b=layerGroups[version][type].getBounds();
+
+                if(b.isValid())visibleBounds.push(b);
+            }
+
+        });
+
+    });
+
+    /* URUTAN LAYER */
+
+    shown.forEach(version=>{
+
+        layerGroups[version].subsls.bringToFront();
+        layerGroups[version].desa.bringToFront();
+        layerGroups[version].kecamatan.bringToFront();
+
+    });
+
+    /* STATUS DATA */
+
+    const counts=types.map(t=>
+        `${t}: ${(data[activeVersion][t]?.features||[]).length}`
+    ).join(' | ');
+
+    document.getElementById('status').textContent=
+        `Versi aktif: ${activeVersion}\n${counts}`;
+
+    setTimeout(()=>{
+        map.invalidateSize();
+        perbaruiLabelSubSLS();
+    },100);
+
+    /* ZOOM SESUAI FILTER */
+
+    let targetType=null;
+
+    if(document.getElementById('subsls').value){
+        targetType='subsls';
+    }else if(document.getElementById('desa').value){
+        targetType='desa';
+    }else if(document.getElementById('kecamatan').value){
+        targetType='kecamatan';
+    }
+
+    if(targetType){
+
+        const hasil=currentFeatures(activeVersion,targetType)
+            .filter(f=>matches(f,targetType));
+
+        if(hasil.length){
+
+            const bounds=L.geoJSON({
+                type:'FeatureCollection',
+                features:hasil
+            }).getBounds();
+
+            if(bounds.isValid()){
+
+                map.flyToBounds(bounds,{
+                    padding:[5,5],
+                    maxZoom:20,
+                    duration:1
+                });
+            }
+        }
+    }
+}
+
+/* LABEL BERUBAH SAAT PETA DIGESER ATAU DI-ZOOM */
+
+let labelTimer=null;
+
+function perbaruiLabelSaatPetaBerubah(){
+
+    clearTimeout(labelTimer);
+
+    labelTimer=setTimeout(()=>{
+        perbaruiLabelSubSLS();
+    },200);
+}
+
+map.on('moveend zoomend',perbaruiLabelSaatPetaBerubah);
+
+/* MEMUAT FILE KML */
+
+async function loadKml(version,type){
+
+    const path=`data/${version}/${type}.kml`;
+
+    try{
+
+        const response=await fetch(path,{cache:'no-store'});
+
+        if(!response.ok){
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const xmlText=await response.text();
+
+        const xml=new DOMParser().parseFromString(
+            xmlText,
+            'text/xml'
+        );
+
+        if(xml.querySelector('parsererror')){
+            throw new Error('XML/KML tidak valid');
+        }
+
+        if(!window.toGeoJSON){
+            throw new Error(
+                'Pustaka KML belum termuat. Periksa koneksi internet.'
+            );
+        }
+
+        const geo=toGeoJSON.kml(xml);
+
+        data[version][type]=geo;
+
+        return {
+            count:geo.features.length,
+            error:null
+        };
+
+    }catch(error){
+
+        data[version][type]={
+            type:'FeatureCollection',
+            features:[]
+        };
+
+        return {
+            count:0,
+            error:`${path}: ${error.message}`
+        };
+    }
+}
+
+/* MEMUAT SELURUH DATA */
+
+async function loadAll(){
+
+    const status=document.getElementById('status');
+
+    status.textContent='Sedang memuat file KML...';
+
+    const errors=[];
+    let total=0;
+
+    for(const v of versions){
+
+        for(const t of types){
+
+            const result=await loadKml(v,t);
+
+            total+=result.count;
+
+            if(result.error){
+                errors.push(result.error);
+            }
+        }
+    }
+
+    updateFilters();
+    redraw();
+
+    if(total===0){
+
+        status.className='status error';
+
+        status.textContent=
+            'Belum ada fitur KML yang berhasil dimuat.\n'+
+            errors.join('\n');
+
+    }else if(errors.length){
+
+        status.className='status error';
+
+        status.textContent=
+            `Berhasil memuat ${total} fitur.\n`+
+            `File yang belum terbaca:\n${errors.join('\n')}`;
+
+    }else{
+
+        status.className='status';
+
+        status.textContent=
+            `Berhasil memuat ${total} fitur dari kedua versi.`;
+    }
+
+    const b=visibleBounds.find(x=>x.isValid());
+
+    if(b)map.fitBounds(b.pad(.08));
+}
+
+/* RESET FILTER */
+
+function resetFilters(){
+
+    [
+        'kecamatan',
+        'desa',
+        'subsls'
+    ].forEach(id=>{
+        document.getElementById(id).value='';
+    });
+
+    updateFilters();
+    redraw();
+}
+
+/* EVENT FILTER */
+
+['kecamatan','desa','subsls'].forEach(id=>{
+
+    document.getElementById(id).addEventListener('change',()=>{
+
+        if(id==='kecamatan'){
+
+            document.getElementById('desa').value='';
+            document.getElementById('subsls').value='';
+        }
+
+        if(id==='desa'){
+
+            document.getElementById('subsls').value='';
+        }
+
+        updateFilters();
+        redraw();
+
+        const b=visibleBounds.find(x=>x.isValid());
+
+        if(b){
+
+            map.flyToBounds(b,{
+                padding:[2,2],
+                maxZoom:20,
+                duration:1
+            });
+        }
+    });
+});
+
+/* EVENT VERSI */
+
+document.querySelectorAll('input[name="version"]').forEach(el=>{
+
+    el.addEventListener('change',e=>{
+
+        activeVersion=e.target.value;
+
+        resetFilters();
+    });
+});
+
+/* EVENT LAYER DAN LABEL */
+
+[
+    'compare',
+    'showKecamatan',
+    'showDesa',
+    'showSubsls',
+    'showLabels',
+    'showDesaLabels',
+    'showKecamatanLabels'
+].forEach(id=>{
+
+    document.getElementById(id).addEventListener(
+        'change',
+        redraw
+    );
+});
+
+/* =========================================
+   PENCARIAN WILKERSTAT
+   ========================================= */
+
+const searchInput=document.getElementById('search');
+const searchResults=document.getElementById('searchResults');
+const searchClear=document.getElementById('searchClear');
+
+let searchTimer=null;
+let searchRequestId=0;
+
+/* MENCARI DATA WILKERSTAT */
+
+function cariDataWilkerstat(query){
+
+    // Pisahkan berdasarkan spasi, tetapi pertahankan
+    // pencocokan kode seperti RT 020-02 dan 020-02.
+    const kataKunci=String(query)
+        .toLowerCase()
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+
+    if(!kataKunci.length)return [];
+
+    const hasil=[];
+    const urutan=['subsls','desa','kecamatan'];
+
+    urutan.forEach(type=>{
+
+        currentFeatures(activeVersion,type).forEach(feature=>{
+
+            const a=fields(feature);
+
+            let nama='';
+            let detail='';
+            let teks='';
+            let icon='📍';
+
+            if(type==='subsls'){
+
+                nama=a.nama||a.nmsls||'Sub-SLS';
+
+                detail=[
+                    a.nmdesa,
+                    a.nmkec
+                ].filter(Boolean).join(' · ');
+
+                teks=[
+                    a.nama,
+                    a.nmsls,
+                    a.kdsubsls,
+                    a.idsubsls,
+                    a.kddesa,
+                    a.nmdesa,
+                    a.kdkec,
+                    a.nmkec
+                ].join(' ');
+
+                icon='📍';
+            }
+
+            if(type==='desa'){
+
+                nama=a.nmdesa||'Desa';
+                detail=`Desa · Kecamatan ${a.nmkec||'-'}`;
+
+                teks=[
+                    a.nmdesa,
+                    a.kddesa,
+                    a.nmkec,
+                    a.kdkec
+                ].join(' ');
+
+                icon='🏡';
+            }
+
+            if(type==='kecamatan'){
+
+                nama=a.nmkec||'Kecamatan';
+                detail=`Kecamatan · Kode ${a.kdkec||'-'}`;
+
+                teks=[
+                    a.nmkec,
+                    a.kdkec
+                ].join(' ');
+
+                icon='🏘️';
+            }
+
+            // Normalisasi untuk pencarian:
+            // RT 020-02 menjadi rt02002
+            const teksNormal=norm(teks);
+
+            const namaNormal=norm(nama);
+
+            // Setiap bagian pencarian harus ditemukan,
+            // urutan bebas.
+            const cocok=kataKunci.every(kata=>{
+
+                const k=norm(kata);
+
+                return k && teksNormal.includes(k);
+            });
+
+            if(!cocok)return;
+
+            let skor=0;
+
+            if(type==='subsls')skor+=100;
+
+            kataKunci.forEach(kata=>{
+
+                const k=norm(kata);
+
+                if(namaNormal.includes(k))skor+=30;
+
+                if(norm(a.nmkec).includes(k))skor+=20;
+
+                if(norm(a.nmdesa).includes(k))skor+=20;
+
+                if(norm(a.idsubsls).includes(k))skor+=15;
+
+                if(norm(a.kdsubsls).includes(k))skor+=15;
+            });
+
+            // Kecocokan seluruh nama lebih diprioritaskan
+            if(namaNormal===norm(query))skor+=100;
+
+            hasil.push({
+                source:'wilkerstat',
+                type,
+                feature,
+                nama,
+                detail,
+                icon,
+                skor
+            });
+
+        });
+
+    });
+
+    hasil.sort((a,b)=>b.skor-a.skor);
+
+    return hasil.slice(0,40);
+}
+
+
+/* MEMBUAT JUDUL HASIL */
+
+function tambahHeading(teks){
+
+    const heading=document.createElement('div');
+    heading.className='result-heading';
+    heading.textContent=teks;
+
+    searchResults.appendChild(heading);
+}
+
+/* MENAMPILKAN HASIL PENCARIAN */
+
+function tambahHasil(item){
+
+    const row=document.createElement('div');
+    row.className='search-result';
+
+    const icon=document.createElement('div');
+    icon.className='result-icon';
+    icon.textContent=item.icon||'📍';
+
+    const info=document.createElement('div');
+    info.className='result-info';
+
+    const name=document.createElement('div');
+    name.className='result-name';
+    name.textContent=item.nama||'Lokasi tanpa nama';
+
+    const detail=document.createElement('div');
+    detail.className='result-detail';
+    detail.textContent=item.detail||'';
+
+    const category=document.createElement('div');
+    category.className='result-category';
+
+    category.textContent=
+        item.type==='subsls'?'Sub-SLS':
+        item.type==='desa'?'Desa':
+        'Kecamatan';
+
+    info.appendChild(name);
+    info.appendChild(detail);
+    info.appendChild(category);
+
+    row.appendChild(icon);
+    row.appendChild(info);
+
+    row.addEventListener('click',()=>{
+
+        pilihHasilWilkerstat(item);
+        tutupHasilPencarian();
+
+    });
+
+    searchResults.appendChild(row);
+}
+
+/* MEMILIH HASIL PENCARIAN */
+
+function pilihHasilWilkerstat(item){
+
+    searchResultLayer.clearLayers();
+
+    const feature=item.feature;
+
+    const highlight=L.geoJSON(feature,{
+
+        style:{
+            color:'#0066ff',
+            weight:4,
+            fillColor:'#3388ff',
+            fillOpacity:.18
+        },
+
+        pointToLayer:(f,latlng)=>L.circleMarker(latlng,{
+            radius:9,
+            color:'#fff',
+            weight:3,
+            fillColor:'#0066ff',
+            fillOpacity:1
+        })
+    });
+
+    highlight.addTo(searchResultLayer);
+
+    const bounds=highlight.getBounds();
+
+    if(bounds.isValid()){
+
+        map.flyToBounds(bounds,{
+            padding:[35,35],
+            maxZoom:item.type==='kecamatan'?13:
+                    item.type==='desa'?16:19,
+            duration:1.2
+        });
+
+    }
+
+    const center=bounds.isValid()
+        ?bounds.getCenter()
+        :map.getCenter();
+
+    L.popup()
+        .setLatLng(center)
+        .setContent(popupHtml(feature,item.type))
+        .openOn(map);
+
+    searchInput.value=item.nama;
+    searchClear.style.display='block';
+}
+
+/* MENJALANKAN PENCARIAN */
+
+function jalankanPencarian(){
+
+    const query=searchInput.value.trim();
+    const q=norm(query);
+
+    searchRequestId++;
+
+    searchResults.innerHTML='';
+    searchClear.style.display=query?'block':'none';
+
+    if(q.length<1){
+
+        searchResults.classList.remove('show');
+        searchResultLayer.clearLayers();
+
+        return;
+    }
+
+    searchResults.classList.add('show');
+
+    const hasil=cariDataWilkerstat(query);
+
+    if(!hasil.length){
+
+        const msg=document.createElement('div');
+        msg.className='search-message';
+        msg.textContent='Sub-SLS atau wilayah tidak ditemukan.';
+
+        searchResults.appendChild(msg);
+
+        return;
+    }
+
+    tambahHeading(
+        `Hasil pencarian (${hasil.length})`
+    );
+
+    hasil.forEach(tambahHasil);
+}
+
+/* EVENT INPUT PENCARIAN */
+
+searchInput.addEventListener('input',()=>{
+
+    clearTimeout(searchTimer);
+
+    const query=searchInput.value.trim();
+
+    searchClear.style.display=query?'block':'none';
+
+    searchTimer=setTimeout(()=>{
+        jalankanPencarian();
+    },180);
+
+});
+
+/* ENTER DAN ESCAPE */
+
+searchInput.addEventListener('keydown',e=>{
+
+    if(e.key==='Enter'){
+
+        clearTimeout(searchTimer);
+        jalankanPencarian();
+    }
+
+    if(e.key==='Escape'){
+        tutupHasilPencarian();
+    }
+
+});
+
+/* HAPUS PENCARIAN */
+
+searchClear.addEventListener('click',()=>{
+
+    searchInput.value='';
+    searchClear.style.display='none';
+
+    searchRequestId++;
+
+    searchResults.innerHTML='';
+    searchResults.classList.remove('show');
+
+    searchResultLayer.clearLayers();
+
+    searchInput.focus();
+});
+
+/* TUTUP HASIL */
+
+function tutupHasilPencarian(){
+    searchResults.classList.remove('show');
+}
+
+document.addEventListener('click',e=>{
+
+    if(!e.target.closest('.search-wrap')){
+        tutupHasilPencarian();
+    }
+
+});
+
+/* TOMBOL RESET */
+
+document.getElementById('reset').addEventListener('click',()=>{
+
+    resetFilters();
+
+    searchInput.value='';
+    searchClear.style.display='none';
+
+    searchRequestId++;
+
+    searchResults.innerHTML='';
+    searchResults.classList.remove('show');
+
+    searchResultLayer.clearLayers();
+});
+
+/* INISIALISASI LAYER */
+
+for(const v of versions){
+
+    for(const t of types){
+
+        layerGroups[v][t]=L.featureGroup().addTo(map);
+    }
+}
+
+/* POSISI SAYA */
+
+let posisiSayaLayer=null;
+
+/* TOMBOL POSISI SAYA */
+
+document.getElementById('lokasiSaya').addEventListener('click',function(){
+
+    const tombol=this;
+
+    if(!navigator.geolocation){
+        alert('Perangkat tidak mendukung GPS.');
+        return;
+    }
+
+    tombol.disabled=true;
+
+    navigator.geolocation.getCurrentPosition(
+
+        function(position){
+
+            const posisi=L.latLng(
+                position.coords.latitude,
+                position.coords.longitude
+            );
+
+            if(posisiSayaLayer){
+                map.removeLayer(posisiSayaLayer);
+            }
+
+            posisiSayaLayer=L.layerGroup().addTo(map);
+
+            L.circleMarker(posisi,{
+                radius:8,
+                color:'#fff',
+                weight:3,
+                fillColor:'#1677ff',
+                fillOpacity:1
+            }).addTo(posisiSayaLayer);
+
+            const fitur=data[activeVersion].subsls?.features||[];
+
+            const ditemukan=fitur.find(f=>
+                posisiDalamSubSLS(posisi,f.geometry)
+            );
+
+            if(ditemukan){
+
+                const bounds=L.geoJSON(ditemukan).getBounds();
+
+                map.flyToBounds(bounds,{
+                    padding:[20,20],
+                    maxZoom:19,
+                    duration:1.5
+                });
+
+                L.popup()
+                    .setLatLng(posisi)
+                    .setContent(
+                        '<b>Posisi Anda</b><br>'+
+                        escapeHtml(fields(ditemukan).nama||'Sub-SLS')
+                    )
+                    .openOn(map);
+
+            }else{
+
+                map.flyTo(posisi,17);
+
+                L.popup()
+                    .setLatLng(posisi)
+                    .setContent(
+                        'Posisi Anda berada di luar batas Sub-SLS yang tersedia.'
+                    )
+                    .openOn(map);
+            }
+
+            tombol.disabled=false;
+        },
+
+        function(error){
+
+            alert('Lokasi gagal diperoleh. Pastikan izin lokasi browser sudah diberikan.');
+
+            tombol.disabled=false;
+        },
+
+        {
+            enableHighAccuracy:true,
+            timeout:15000,
+            maximumAge:0
+        }
+    );
+
+});
+
+/* MULAI MEMUAT DATA */
+
+loadAll();
+
+</script>
+
+</body>
+</html>
